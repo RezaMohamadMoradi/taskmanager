@@ -1,7 +1,144 @@
 ﻿@page "/"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using taskmanager.Model
+@using taskmanager.Services
+@using Task = System.Threading.Tasks.Task
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.Welcome to your new app.Welcome to your new app.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <h1 class="text-center mb-4">مدیریت وظایف</h1>
+
+        <!-- Task Table -->
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>عنوان</th>
+                    <th>جزئیات</th>
+                    <th>دسته بندی</th>
+                    <th>وضعیت</th>
+                    <th>تاریخ افزودن</th>
+                    <th>تاریخ انجام</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Example Task Row -->
+                <tr>
+                    <td>Complete Project Report</td>
+                    <td>Prepare the final report for the project.</td>
+                    <td>Work</td>
+                    <td><span class="badge bg-success">Completed</span></td>
+                    <td>2024-12-01</td>
+                    <td>2024-12-10</td>
+                </tr>
+                <tr>
+                    <td>Plan Marketing Campaign</td>
+                    <td>Brainstorm ideas for Q1 marketing.</td>
+                    <td>Marketing</td>
+                    <td><span class="badge bg-warning">In Progress</span></td>
+                    <td>2024-12-12</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Organize Team Meeting</td>
+                    <td>Schedule and plan the team meeting for next week.</td>
+                    <td>Management</td>
+                    <td><span class="badge bg-danger">Pending</span></td>
+                    <td>2024-12-14</td>
+                    <td>--</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Add Task Button -->
+        <div class="text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">افزودن وظیفه جدید</button>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTaskModalLabel">افزودن وظیفه جدید</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="taskTitle" class="form-label">عنوان</label>
+                            <input type="text" class="form-control" id="taskTitle" placeholder="Enter task title">
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">جزئیات</label>
+                            <textarea class="form-control" id="taskDescription" rows="3" placeholder="Enter task description"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskGroup" class="form-label">دسته بندی</label>
+                            <input type="text" class="form-control" id="taskGroup" placeholder="Enter task group">
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskStatus" class="form-label">وضعیت</label>
+                            <select class="form-select" id="taskStatus">
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskAddDate" class="form-label">تاریخ افزودن</label>
+                            <input type="date" class="form-control" id="taskAddDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskCompletionDate" class="form-label">تاریخ انجام</label>
+                            <input type="date" class="form-control" id="taskCompletionDate">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">ذخیره</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p><strong>نام کاربر:</strong> @user.Identity.Name</p>
+    <p><strong>ایمیل:</strong> @user.FindFirst(ClaimTypes.Email)?.Value</p>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+@code {
+    private ClaimsPrincipal user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/Login");
+        }
+    }
+
+}
+
