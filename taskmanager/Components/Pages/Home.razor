@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
@@ -8,7 +9,9 @@
 @using Task = System.Threading.Tasks.Task
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Mvc
+@using TaskStatus = taskmanager.Model.TaskStatus
 @inject NavigationManager NavigationManager
+@inject  TaskServices TaskServices
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @attribute [Authorize]
 
@@ -41,32 +44,23 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Example Task Row -->
+            @foreach (var task in userTasks)
+            {
                 <tr>
-                    <td>Complete Project Report</td>
-                    <td>Prepare the final report for the project.</td>
-                    <td>Work</td>
-                    <td><span class="badge bg-success">Completed</span></td>
-                    <td>2024-12-01</td>
-                    <td>2024-12-10</td>
+                    <td>@task.Title</td>
+                    <td>@task.Description</td>
+                    <td>@task.Category</td>
+                    <td>
+                        <span class="badge @(task.Status == TaskStatus.Completed ? "bg-success" : task.Status == TaskStatus.InProgress ? "bg-warning" : "bg-danger")">
+                            @task.Status
+                        </span>
+                    </td>
+                    <td>@task.AddDate?.ToString("yyyy-MM-dd")</td>
+                    <td>@task.DateCompletion?.ToString("yyyy-MM-dd")</td>
                 </tr>
-                <tr>
-                    <td>Plan Marketing Campaign</td>
-                    <td>Brainstorm ideas for Q1 marketing.</td>
-                    <td>Marketing</td>
-                    <td><span class="badge bg-warning">In Progress</span></td>
-                    <td>2024-12-12</td>
-                    <td>--</td>
-                </tr>
-                <tr>
-                    <td>Organize Team Meeting</td>
-                    <td>Schedule and plan the team meeting for next week.</td>
-                    <td>Management</td>
-                    <td><span class="badge bg-danger">Pending</span></td>
-                    <td>2024-12-14</td>
-                    <td>--</td>
-                </tr>
+            }
             </tbody>
+
         </table>
 
         <!-- Add Task Button -->
@@ -84,37 +78,40 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form>
-                        <div class="mb-3">
-                            <label for="taskTitle" class="form-label">عنوان</label>
-                            <input type="text" class="form-control" id="taskTitle" placeholder="Enter task title">
+                    <EditForm Model="TaskModel" OnValidSubmit="OnSubmitTask">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-4">
+                            <label class="form-label" for="Title">Title</label>
+                            <InputText id="Title" class="form-control" @bind-Value="TaskModel.Title" />
                         </div>
-                        <div class="mb-3">
-                            <label for="taskDescription" class="form-label">جزئیات</label>
-                            <textarea class="form-control" id="taskDescription" rows="3" placeholder="Enter task description"></textarea>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="Description">Description</label>
+                            <InputTextArea id="Description" class="form-control" @bind-Value="TaskModel.Description" />
                         </div>
-                        <div class="mb-3">
-                            <label for="taskGroup" class="form-label">دسته بندی</label>
-                            <input type="text" class="form-control" id="taskGroup" placeholder="Enter task group">
+
+                        <div class="mb-4">
+                            <label class="form-label" for="Category">Category</label>
+                            <InputText id="Category" class="form-control" @bind-Value="TaskModel.Category" />
                         </div>
-                        <div class="mb-3">
-                            <label for="taskStatus" class="form-label">وضعیت</label>
-                            <select class="form-select" id="taskStatus">
-                                <option value="Pending">Pending</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option>
-                            </select>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="AddDate">Add Date</label>
+                            <InputDate id="AddDate" class="form-control" @bind-Value="TaskModel.AddDate" />
                         </div>
-                        <div class="mb-3">
-                            <label for="taskAddDate" class="form-label">تاریخ افزودن</label>
-                            <input type="date" class="form-control" id="taskAddDate">
+
+                        <div class="mb-4">
+                            <label class="form-label" for="DateCompletion">Completion Date (optional)</label>
+                            <InputDate id="DateCompletion" class="form-control" @bind-Value="TaskModel.DateCompletion" />
                         </div>
-                        <div class="mb-3">
-                            <label for="taskCompletionDate" class="form-label">تاریخ انجام</label>
-                            <input type="date" class="form-control" id="taskCompletionDate">
+
+                        <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
+                            <button type="submit" class="btn btn-primary btn-lg">Add Task</button>
                         </div>
-                        <button type="submit" class="btn btn-success w-100">ذخیره</button>
-                    </form>
+                    </EditForm>
+
                 </div>
             </div>
         </div>
@@ -128,6 +125,27 @@
 </html>
 @code {
     private ClaimsPrincipal user;
+    private List<taskmanager.Model.Task> userTasks = new();
+    private taskmanager.Model.Task newTask = new();
+    public class AddTaskModel
+    {
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(100, ErrorMessage = "Title cannot exceed 100 characters")]
+        public string Title { get; set; }
+
+        [Required(ErrorMessage = "Description is required")]
+        [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
+        public string Description { get; set; }
+
+        [Required(ErrorMessage = "Category is required")]
+        public string Category { get; set; }
+
+        [Required(ErrorMessage = "Add Date is required")]
+        public DateTime? AddDate { get; set; }
+
+        public DateTime? DateCompletion { get; set; }
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,6 +157,23 @@
             NavigationManager.NavigateTo("/Login");
         }
     }
+    public AddTaskModel TaskModel { get; set; } = new();
 
+    private async Task OnSubmitTask()
+    {
+        try
+        {
+            // افزودن وظیفه جدید به دیتابیس
+            await TaskServices.AddTaskAsync(TaskModel);
+
+            // هدایت به صفحه اصلی
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            // مدیریت خطا
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
 }
 

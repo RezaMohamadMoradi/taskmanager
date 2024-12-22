@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using taskmanager.Components;
 using taskmanager.Model;
@@ -11,6 +12,7 @@ builder.Services.AddDbContext<Db>(options =>
 
 // DI برای کلاس‌های services
 builder.Services.AddScoped<UserServices>();
+builder.Services.AddScoped<TaskServices>();
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
@@ -27,9 +29,17 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Login"; // مسیر صفحه لاگین
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+    options.ExpireTimeSpan = TimeSpan.FromDays(1);
 
 });
+
+builder.Services.AddRazorPages()
+    .AddRazorPagesOptions(options =>
+    {
+        options.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
+    });
+
+
 // Add services to the container.
 builder.Services.AddRazorComponents();
 

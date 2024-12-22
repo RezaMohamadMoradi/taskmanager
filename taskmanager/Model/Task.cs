@@ -10,8 +10,8 @@ namespace taskmanager.Model
         public TaskStatus Status { get; set; } = TaskStatus.Pending;// تغییر داده شد
 
         public string? Category { get; set; }
-        public DateTime AddDate { get; set; }
-        public DateTime DateCompletion { get; set; }
+        public DateTime? AddDate { get; set; }
+        public DateTime? DateCompletion { get; set; }
 
         public User user { get; set; }
     }

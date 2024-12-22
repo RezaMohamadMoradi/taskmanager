@@ -2,6 +2,7 @@
 using System.Linq;
 using taskmanager.Model;
 using taskmanager.Model;
+using static taskmanager.Components.Pages.Home;
 using Task = taskmanager.Model.Task;
 using TaskStatus = taskmanager.Model.TaskStatus;
 
@@ -16,11 +17,20 @@ namespace taskmanager.Services
             
             _db = db;
         }
-        public void AddTask(Task task)
+        public async System.Threading.Tasks.Task AddTaskAsync(AddTaskModel model)
         {
-            task.AddDate = DateTime.Now; // تنظیم تاریخ افزودن
-            _db.Tasks.Add(task);
-            _db.SaveChanges();
+            var newTask = new Task
+            {
+                Title = model.Title,
+                Description = model.Description,
+                Category = model.Category,
+                AddDate = model.AddDate,
+                DateCompletion = model.DateCompletion
+                
+            };
+
+            _db.Tasks.Add(newTask);
+            await _db.SaveChangesAsync();
         }
 
         // خواندن تمام تسک‌های یک کاربر
