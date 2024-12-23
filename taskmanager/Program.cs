@@ -39,9 +39,12 @@ builder.Services.AddRazorPages()
         options.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
     });
 
+builder.Services.AddAntiforgery();
 
 // Add services to the container.
 builder.Services.AddRazorComponents();
+
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddServerSideBlazor(); // Blazor Server
 
@@ -58,10 +61,12 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
-app.UseAntiforgery();
 
 app.UseAuthentication(); // حتماً قبل از Authorization فراخوانی شود
+
 app.UseAuthorization();
+app.UseAntiforgery();
+
 
 app.MapRazorComponents<App>();
 

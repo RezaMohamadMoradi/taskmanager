@@ -8,11 +8,14 @@
 @using taskmanager.Services
 @using Task = System.Threading.Tasks.Task
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Mvc
 @using TaskStatus = taskmanager.Model.TaskStatus
 @inject NavigationManager NavigationManager
 @inject  TaskServices TaskServices
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
 @attribute [Authorize]
 
 
@@ -78,7 +81,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <EditForm Model="TaskModel" OnValidSubmit="OnSubmitTask">
+                    <EditForm Model="TaskModel" FormName="Addtask" OnValidSubmit="OnSubmitTask">
                         <DataAnnotationsValidator />
                         <ValidationSummary />
 
@@ -110,7 +113,9 @@
                         <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
                             <button type="submit" class="btn btn-primary btn-lg">Add Task</button>
                         </div>
-                    </EditForm>
+                        @* <input name="__RequestVerificationToken" type="hidden" 
+                               value="@Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext).RequestToken" /> *@
+                        </EditForm>
 
                 </div>
             </div>
@@ -157,8 +162,9 @@
             NavigationManager.NavigateTo("/Login");
         }
     }
+    [SupplyParameterFromForm(FormName = "Addtask")]//مشخص میکنیم برای کدام فرم است این مدل
     public AddTaskModel TaskModel { get; set; } = new();
-
+    [HttpPost]
     private async Task OnSubmitTask()
     {
         try

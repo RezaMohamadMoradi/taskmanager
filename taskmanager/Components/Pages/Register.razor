@@ -101,7 +101,7 @@
     [SupplyParameterFromForm(FormName = "Register")]//مشخص میکنیم برای کدام فرم است این مدل
 
     public Registermodel RegisterModel { get; set; } = new();
-
+    [HttpPost]
     async Task onregister()
     {
         if (RegisterModel != null)

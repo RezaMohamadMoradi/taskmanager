@@ -25,8 +25,8 @@
                             <div class="col-md-10 col-lg-6 col-xl-5 order-2 order-lg-1">
 
                                 <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Login</p>
-
-                                <EditForm Model="LoginClass" FormName="Login" OnValidSubmit="onlogin">
+                                
+                                <EditForm Model="LoginClass" FormName="Login"  OnValidSubmit="onlogin">
                                     @* مدل اختصاصی این فرم به همراه نام فرم و متد مرتبط با آن *@
                                     <DataAnnotationsValidator />
                                     <ValidationSummary />
@@ -93,7 +93,7 @@
     public string ErrorMessage { get; set; } = string.Empty;// مدیریت خطا
 
 
-
+    [HttpPost]
     private async Task onlogin()
     {
         // یافتن کاربر بر اساس نام کاربری
@@ -108,7 +108,8 @@
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(ClaimTypes.Email, user.Email) // افزودن ایمیل به Claims
+                    new Claim(ClaimTypes.Email, user.Email), // افزودن ایمیل به Claims
+                    
                 };
 
                 // ساختن Identity و ClaimsPrincipal
@@ -132,50 +133,7 @@
         }
     }
 
-    // private async Task onlogin()
-    // {
-    //     // یافتن کاربر بر اساس نام کاربری
-    //     var user = await UserManager.FindByNameAsync(LoginClass.name);
-
-    //     if (user != null)
-    //     {
-    //         // بررسی رمز عبور
-    //         if (await UserManager.CheckPasswordAsync(user, LoginClass.password))
-    //         {
-    //             // لاگین کاربر
-    //             var result = await SignInManager.PasswordSignInAsync(user.UserName, LoginClass.password, isPersistent: true, lockoutOnFailure: false);
-
-    //             if (result.Succeeded)
-    //             {
-    //                 NavigationManager.NavigateTo("/");
-    //             }
-    //             else if (result.IsLockedOut)
-    //             {
-    //                 ErrorMessage = "Your account is locked. Please try again later.";
-    //             }
-    //             else if (result.IsNotAllowed)
-    //             {
-    //                 ErrorMessage = "Login is not allowed. Please verify your account.";
-    //             }
-    //             else if (result.RequiresTwoFactor)
-    //             {
-    //                 ErrorMessage = "Two-factor authentication is required.";
-    //             }
-    //             else
-    //             {
-    //                 ErrorMessage = "Login failed. Please check your credentials.";
-    //             }
-    //         }
-    //         else
-    //         {
-    //             ErrorMessage = "Invalid password. Please try again.";
-    //         }
-    //     }
-    //     else
-    //     {
-    //         ErrorMessage = "User not found. Please try again.";
-    //     }
-    // }
+    
 
 
 }
