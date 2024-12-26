@@ -14,6 +14,8 @@ namespace taskmanager.Model
         public DateTime? DateCompletion { get; set; }
 
         public User user { get; set; }
+        public string? UserId { get; set; } // اضافه کردن شناسه کاربر
+
     }
 
     // تعریف Enum

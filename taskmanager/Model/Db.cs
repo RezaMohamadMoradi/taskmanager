@@ -18,13 +18,15 @@ namespace taskmanager.Model
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<IdentityUserLogin<string>>().HasNoKey();
             base.OnModelCreating(modelBuilder);
-
-
-            modelBuilder.Entity<IdentityUserLogin<string>>().HasKey(l => new { l.LoginProvider, l.ProviderKey });
+            modelBuilder.Entity<Task>()
+                .HasOne(t => t.user)
+                .WithMany(u => u.Tasks)
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
-
-
 }
+
+
+

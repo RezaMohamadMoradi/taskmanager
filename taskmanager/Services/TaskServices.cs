@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq;
-using taskmanager.Model;
+using taskmanager.Components.Pages;
 using taskmanager.Model;
 using static taskmanager.Components.Pages.Home;
 using Task = taskmanager.Model.Task;
@@ -17,7 +17,7 @@ namespace taskmanager.Services
             
             _db = db;
         }
-        public async System.Threading.Tasks.Task AddTaskAsync(AddTaskModel model)
+        public async System.Threading.Tasks.Task AddTaskAsync(AddTask.AddTaskModel model, string userId)
         {
             var newTask = new Task
             {
@@ -25,65 +25,68 @@ namespace taskmanager.Services
                 Description = model.Description,
                 Category = model.Category,
                 AddDate = model.AddDate,
-                DateCompletion = model.DateCompletion
-                
+                DateCompletion = model.DateCompletion,
+                UserId = userId // اضافه کردن شناسه کاربر
             };
 
             _db.Tasks.Add(newTask);
             await _db.SaveChangesAsync();
         }
 
+
         // خواندن تمام تسک‌های یک کاربر
-        public List<Task> GetAllTasks(string userId)
+        public async System.Threading.Tasks.Task<List<Model.Task>> GetAllTasksAsync(string userId)
         {
-            return _db.Tasks
-                      .Include(t => t.user)
-                      .Where(t => t.user.Id == userId)
-                      .OrderByDescending(t => t.AddDate)
-                      .ToList();
+            return await _db.Tasks
+                .Include(t => t.user)
+                .Where(t => t.user.Id == userId)
+                .OrderByDescending(t => t.AddDate)
+                .ToListAsync();
+        }
+        public async Task<Task> GetTaskByIdAsync(int taskId)
+        {
+            return await _db.Tasks.FirstOrDefaultAsync(t => t.id == taskId);
         }
 
+
         // به‌روزرسانی تسک
-        public void UpdateTask(Task updatedTask)
+        public async System.Threading.Tasks.Task RemoveTask(int taskId)
         {
-            var existingTask = _db.Tasks.FirstOrDefault(t => t.id == updatedTask.id);
+            var task = await _db.Tasks.FirstOrDefaultAsync(t => t.id == taskId);
+            if (task != null)
+            {
+                _db.Tasks.Remove(task);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async System.Threading.Tasks.Task UpdateTask(Task updatedTask)
+        {
+            var existingTask = await _db.Tasks.FirstOrDefaultAsync(t => t.id == updatedTask.id);
             if (existingTask != null)
             {
                 existingTask.Title = updatedTask.Title;
                 existingTask.Description = updatedTask.Description;
                 existingTask.Category = updatedTask.Category;
                 existingTask.Status = updatedTask.Status;
-                existingTask.DateCompletion = updatedTask.Status == TaskStatus.Completed
-                    ? DateTime.Now // تنظیم تاریخ اتمام اگر تسک کامل شد
-                    : default;
+                existingTask.DateCompletion = updatedTask.DateCompletion;
 
-                _db.SaveChanges();
+                // در اینجا تغییرات را در پایگاه داده ذخیره می‌کنیم
+                await _db.SaveChangesAsync();
             }
         }
 
-        // حذف تسک
-        public void RemoveTask(int taskId)
-        {
-            var task = _db.Tasks.FirstOrDefault(t => t.id == taskId);
-            if (task != null)
-            {
-                _db.Tasks.Remove(task);
-                _db.SaveChanges();
-            }
-        }
 
         // تغییر وضعیت تسک
-        public void ChangeTaskStatus(int taskId, TaskStatus newStatus)
+        public async System.Threading.Tasks.Task ChangeTaskStatus(int taskId)
         {
             var task = _db.Tasks.FirstOrDefault(t => t.id == taskId);
             if (task != null)
             {
-                task.Status = newStatus;
-                task.DateCompletion = newStatus == TaskStatus.Completed
-                    ? DateTime.Now // اگر وضعیت کامل شد، تاریخ اتمام تنظیم شود
-                    : default;
+                task.Status = TaskStatus.Completed;
+               
 
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
             }
         }
     }

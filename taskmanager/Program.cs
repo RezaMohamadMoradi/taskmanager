@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using taskmanager.Components;
 using taskmanager.Model;
 using taskmanager.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 var builder = WebApplication.CreateBuilder(args);
 // ADD Database dependency injection
@@ -42,12 +43,21 @@ builder.Services.AddRazorPages()
 builder.Services.AddAntiforgery();
 
 // Add services to the container.
-builder.Services.AddRazorComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
+builder.Logging.AddConsole();
+
 builder.Services.AddServerSideBlazor(); // Blazor Server
 
+
+
+builder.Services.AddHttpClient();
+
+builder.Services.AddMemoryCache();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -68,6 +78,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 
-app.MapRazorComponents<App>();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();

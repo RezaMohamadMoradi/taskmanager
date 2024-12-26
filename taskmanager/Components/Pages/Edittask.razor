@@ -1,0 +1,111 @@
+﻿@page "/Edittask/{taskId:int}"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using taskmanager.Model
+@using taskmanager.Services
+@using Task = System.Threading.Tasks.Task
+@inject NavigationManager NavigationManager
+@inject TaskServices TaskServices
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">ویرایش وظیفه</h5>
+        </div>
+        <div class="card-body">
+            <EditForm Model="newTask" FormName="Edittask" OnValidSubmit="OnEditSubmit">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">عنوان</label>
+                    <InputText class="form-control" @bind-Value="newTask.Title" placeholder="عنوان وظیفه را وارد کنید" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">توضیحات</label>
+                    <InputTextArea class="form-control" @bind-Value="newTask.Description" rows="4" placeholder="توضیحات وظیفه را وارد کنید"></InputTextArea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">دسته‌بندی</label>
+                    <InputTextArea class="form-control" @bind-Value="newTask.Category" rows="4" ></InputTextArea>
+
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" for="DateCompletion">تاریخ انجام (اختیاری)</label>
+                    <InputDate id="DateCompletion" class="form-control" @bind-Value="newTask.DateCompletion" />
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save"></i> ذخیره
+                    </button>
+                    <button type="button" class="btn btn-secondary ms-2" @onclick="NavigateBack">
+                        <i class="bi bi-arrow-left"></i> بازگشت
+                    </button>
+                </div>
+               
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    [SupplyParameterFromForm(FormName = "Edittask")] // این را حذف کنید
+    private AddTaskModel newTask { get; set; } = new AddTaskModel();
+
+    [Parameter]
+    public int taskId { get; set; }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/"); // هدایت به صفحه اصلی
+    }
+
+    public class AddTaskModel
+    {
+        public int TaskId { get; set; } // شناسه وظیفه
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Category { get; set; }
+        public DateTime DateCompletion { get; set; }
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // بارگذاری اطلاعات وظیفه
+        var taskToEdit = await TaskServices.GetTaskByIdAsync(taskId);
+        if (taskToEdit != null)
+        {
+            newTask.TaskId = taskToEdit.id;
+       
+            
+        }
+    }
+    private async Task OnEditSubmit()//باید یک مدل برای این متد بازم تا از ورودی به اون بفرسته و از مدل جدید اطلاعات بگیرم
+    {
+        // واکشی تسک موجود از دیتابیس
+        var existingTask = await TaskServices.GetTaskByIdAsync(newTask.TaskId);
+        if (existingTask != null)
+        {
+            // به‌روزرسانی مقادیر تسک موجود
+            existingTask.Title = newTask.Title;
+            existingTask.Description = newTask.Description;
+            existingTask.Category = newTask.Category;
+            existingTask.DateCompletion = newTask.DateCompletion;
+            // به‌روزرسانی در پایگاه داده
+            await TaskServices.UpdateTask(existingTask);
+            NavigateBack(); // بازگشت به صفحه اصلی
+        }
+        else
+        {
+            // اگر تسک وجود نداشت، مدیریت خطا
+            Console.WriteLine("Task not found.");
+        }
+    }
+
+
+}

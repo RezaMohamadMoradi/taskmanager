@@ -1,0 +1,98 @@
+﻿@page "/addtask"
+@using Microsoft.AspNetCore.Components.Authorization
+@using taskmanager.Model
+@using taskmanager.Services
+@using Task = System.Threading.Tasks.Task
+@inject NavigationManager NavigationManager
+@inject TaskServices TaskServices
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>افزودن وظیفه جدید</PageTitle>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title m-1">افزودن وظیفه جدید</h3>
+                </div>
+
+                <div class="card-body">
+                    <EditForm Model="TaskModel" FormName="addtask" OnValidSubmit="OnSubmitTask">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger" />
+
+                        <!-- عنوان -->
+                        <div class="mb-4">
+                            <label class="form-label" for="Title">عنوان</label>
+                            <InputText id="Title" class="form-control" @bind-Value="TaskModel.Title" placeholder="عنوان وظیفه را وارد کنید" />
+                        </div>
+
+                        <!-- توضیحات -->
+                        <div class="mb-4">
+                            <label class="form-label" for="Description">توضیحات</label>
+                            <InputTextArea id="Description" class="form-control" @bind-Value="TaskModel.Description" rows="4" placeholder="توضیحات مربوط به وظیفه را وارد کنید" />
+                        </div>
+
+                        <!-- دسته‌بندی -->
+                        <div class="mb-4">
+                            <label class="form-label" for="Category">دسته بندی</label>
+                            <InputText id="Category" class="form-control" @bind-Value="TaskModel.Category" placeholder="دسته‌بندی وظیفه را مشخص کنید" />
+                        </div>
+
+                        <!-- تاریخ افزودن -->
+                        <div class="mb-4">
+                            <label class="form-label" for="AddDate">تاریخ افزودن</label>
+                            <InputDate id="AddDate" class="form-control" @bind-Value="TaskModel.AddDate" />
+                        </div>
+
+                        <!-- تاریخ انجام -->
+                        <div class="mb-4">
+                            <label class="form-label" for="DateCompletion">تاریخ انجام (اختیاری)</label>
+                            <InputDate id="DateCompletion" class="form-control" @bind-Value="TaskModel.DateCompletion" />
+                        </div>
+
+                        <!-- دکمه ارسال -->
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-success">ذخیره وظیفه</button>
+                            <button type="button" class="btn btn-secondary ms-2" @onclick="NavigateBack">بازگشت</button>
+                        </div>
+                    </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code {
+    [SupplyParameterFromForm(FormName = "addtask")]//مشخص میکنیم برای کدام فرم است این مدل
+    private AddTaskModel TaskModel { get; set; } = new AddTaskModel();
+
+    private async Task OnSubmitTask()
+    {
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await TaskServices.AddTaskAsync(TaskModel, userId);
+            NavigationManager.NavigateTo("/"); // هدایت به صفحه اصلی پس از افزودن وظیفه
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/"); // هدایت به صفحه اصلی
+    }
+
+    public class AddTaskModel
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Category { get; set; }
+        public DateTime? AddDate { get; set; }
+        public DateTime? DateCompletion { get; set; }
+    }
+}
