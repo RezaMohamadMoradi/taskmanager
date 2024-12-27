@@ -69,6 +69,7 @@
                     <div class="text-center">
                         <p>Not a member? <a href="/Register">Register</a></p>
                     </div>
+                   
                 </div>
             </div>
         </div>
@@ -109,7 +110,7 @@
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
                     new Claim(ClaimTypes.Email, user.Email), // افزودن ایمیل به Claims
-                    
+
                 };
 
                 // ساختن Identity و ClaimsPrincipal
@@ -132,8 +133,6 @@
             ErrorMessage = "User not found. Please try again.";
         }
     }
-
     
-
 
 }

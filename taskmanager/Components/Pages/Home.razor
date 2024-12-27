@@ -19,6 +19,8 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
 @attribute [Authorize]
 
 
@@ -53,44 +55,44 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach (var task in userTasks)
-                {
-                    var removeTaskFormName = $"removeTask_{task.id}";
-                    var changeTaskStatusFormName = $"changeTaskStatus_{task.id}";
+                    @foreach (var task in userTasks)
+                    {
+                        var removeTaskFormName = $"removeTask_{task.id}";
+                        var changeTaskStatusFormName = $"changeTaskStatus_{task.id}";
 
-                    <tr>
-                        <td>@task.Title</td>
-                        <td>@task.Description</td>
-                        <td>@task.Category</td>
-                        <td>
-                            <span class="badge @(task.Status == TaskStatus.Completed ? "bg-success" : task.Status == TaskStatus.InProgress ? "bg-warning" : "bg-danger")">
-                                @task.Status
-                            </span>
-                        </td>
-                        <td>@task.AddDate?.ToString("yyyy-MM-dd")</td>
-                        <td>@task.DateCompletion?.ToString("yyyy-MM-dd")</td>
-                        <td>
-                            <!-- فرم حذف -->
-                            <EditForm Model="@task" OnValidSubmit="() => HandleRemoveTask(task.id)" FormName="@removeTaskFormName">
-                                <button type="submit" class="btn btn-danger" style="font-size:12px; font-family:'Iranian Sans'; border-radius:10px">
-                                    حذف
+                        <tr>
+                            <td>@task.Title</td>
+                            <td>@task.Description</td>
+                            <td>@task.Category</td>
+                            <td>
+                                <span class="badge @(task.Status == TaskStatus.Completed ? "bg-success" : task.Status == TaskStatus.InProgress ? "bg-warning" : "bg-danger")">
+                                    @task.Status
+                                </span>
+                            </td>
+                            <td>@task.AddDate?.ToString("yyyy-MM-dd")</td>
+                            <td>@task.DateCompletion?.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <!-- فرم حذف -->
+                                <EditForm Model="@task" OnValidSubmit="() => HandleRemoveTask(task.id)" FormName="@removeTaskFormName">
+                                    <button type="submit" class="btn btn-danger" style="font-size:12px; font-family:'Iranian Sans'; border-radius:10px">
+                                        حذف
+                                    </button>
+                                </EditForm>
+
+                                <!-- فرم تغییر وضعیت -->
+                                <EditForm Model="@task" OnValidSubmit="() => HandleChangeTaskStatus(task.id)" FormName="@changeTaskStatusFormName">
+                                    <button type="submit" class="btn btn-success" style="font-size:12px; font-family:'Iranian Sans'; border-radius:10px">
+                                        انجام شد
+                                    </button>
+                                </EditForm>
+
+                                <!-- دکمه ویرایش -->
+                                <button class="btn-warning" style="border-radius:10px ">
+                                     <a href="/Edittask/@task.id" style="color: white; text-decoration:none; font-family:'Iranian Sans' ">ویرایش</a>
                                 </button>
-                            </EditForm>
-
-                            <!-- فرم تغییر وضعیت -->
-                            <EditForm Model="@task" OnValidSubmit="() => HandleChangeTaskStatus(task.id)" FormName="@changeTaskStatusFormName">
-                                <button type="submit" class="btn btn-success" style="font-size:12px; font-family:'Iranian Sans'; border-radius:10px">
-                                    انجام شد
-                                </button>
-                            </EditForm>
-
-                            <!-- دکمه ویرایش -->
-                            <button class="btn-warning" style="border-radius:10px">
-                                <a href="/Edittask/@task.id" style="color: black;">ویرایش</a>
-                            </button>
-                        </td>
-                    </tr>
-                }
+                            </td>
+                        </tr>
+                    }
                 </tbody>
 
 
@@ -100,14 +102,13 @@
         }
         else
         {
-            <p>هیچ وظیفه‌ای برای نمایش وجود ندارد.</p>
+            <p class ="text-danger">*هیچ وظیفه‌ای برای نمایش وجود ندارد.*</p>
         }
-        <!-- لینک به صفحه افزودن وظیفه جدید -->
 
 
         <NavLink class="text-end" href="addtask">
             <div class="text-end">
-                <button class="btn btn-primary">افزودن وظیفه جدید</button>
+                <button class="btn btn-primary">+ افزودن وظیفه جدید</button>
             </div>
         </NavLink>
 
@@ -115,9 +116,14 @@
     </div>
 
     <!-- Add Task Modal -->
-    
+
     <p><strong>نام کاربر:</strong> @user.Identity.Name</p>
     <p><strong>ایمیل:</strong> @user.FindFirst(ClaimTypes.Email)?.Value</p>
+    <EditForm Model="@user.Identity.Name"  OnValidSubmit="onlogout" FormName="logout">
+        <button type="submit" class="btn btn-danger" style="font-size:12px; font-family:'Iranian Sans'; border-radius:10px">
+            خروج از حساب
+        </button>
+    </EditForm>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
@@ -168,28 +174,39 @@
         }
     }
 
-    
-   
-        @code {
-            private async Task HandleRemoveTask(int taskId)
-            {
-                await TaskServices.RemoveTask(taskId);
-                userTasks = await TaskServices.GetAllTasksAsync(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                StateHasChanged(); // اجبار بروزرسانی رابط کاربری
-            }
 
-            private async Task HandleChangeTaskStatus(int taskId)
-            {
-                await TaskServices.ChangeTaskStatus(taskId);
-                userTasks = await TaskServices.GetAllTasksAsync(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                StateHasChanged(); // اجبار بروزرسانی رابط کاربری
-            }
-        }
 
-    
 
-   
+    private async Task HandleRemoveTask(int taskId)
+    {
+        await TaskServices.RemoveTask(taskId);
+        userTasks = await TaskServices.GetAllTasksAsync(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        StateHasChanged(); // اجبار بروزرسانی رابط کاربری
+    }
 
-   
+    private async Task HandleChangeTaskStatus(int taskId)
+    {
+        await TaskServices.ChangeTaskStatus(taskId);
+        userTasks = await TaskServices.GetAllTasksAsync(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        StateHasChanged(); // اجبار بروزرسانی رابط کاربری
+    }
+
+
+    [HttpPost]
+    private async Task onlogout()
+    {
+       
+            await SignInManager.SignOutAsync();
+            // هدایت به صفحه اصلی
+            NavigationManager.NavigateTo("/");
+        StateHasChanged();
+       
+    }
+
+
+
+
+
+
 }
 
